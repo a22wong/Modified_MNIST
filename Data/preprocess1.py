@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 train_x = "../Data/train_x.csv"
 train_y = "../Data/train_x.csv"
 train_x_short = "../Data/train_x_short.csv"
-
+train_y_short = "../Data/train_y_short.csv"
 
 def reprocess():
     with open(train_x, 'r+') as readfile:
@@ -16,9 +16,21 @@ def reprocess():
             for row in reader:
                 writer.writerow(row)
                 count += 1
-                if count == 100:
+                if count == 10:
                     break
 
+    with open(train_y, 'r+') as readfile:
+        with open(train_y_short, 'w') as writefile:
+            reader = csv.reader(readfile)
+            writer = csv.writer(writefile)
+            count = 0
+            for row in reader:
+                writer.writerow(row)
+                count += 1
+                if count == 10:
+                    break
+
+reprocess()
 x = np.loadtxt("../Data/train_x_short.csv", delimiter=",") # load from text
 y = np.loadtxt("../Data/train_y.csv", delimiter=",")
 print "Raw:"
