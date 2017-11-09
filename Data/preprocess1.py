@@ -30,7 +30,7 @@ def reprocess():
                 if count == 10:
                     break
 
-reprocess()
+# reprocess()
 x = np.loadtxt("../Data/train_x_short.csv", delimiter=",") # load from text
 y = np.loadtxt("../Data/train_y.csv", delimiter=",")
 print "Raw:"
@@ -39,5 +39,5 @@ x = x.reshape(-1, 64, 64) # reshape
 y = y.reshape(-1, 1)
 print "Reshaped"
 print x[0]
-plt.imshow(x[0]) # to visualize only
+plt.imshow(x[5]) # to visualize only
 plt.show()
