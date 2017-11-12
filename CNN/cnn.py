@@ -8,6 +8,7 @@ from __future__ import print_function
 # Imports
 import numpy as np
 import tensorflow as tf
+from resize_data import *
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -73,7 +74,7 @@ def cnn_model_fn(features, labels, mode):
 	# Logits layer
 	# Input Tensor Shape: [batch_size, 1024]
 	# Output Tensor Shape: [batch_size, 40]
-	logits = tf.layers.dense(inputs=dropout, units=10)
+	logits = tf.layers.dense(inputs=dropout, units=40)
 
 	predictions = {
 			# Generate predictions (for PREDICT and EVAL mode)
@@ -86,7 +87,7 @@ def cnn_model_fn(features, labels, mode):
 		return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
 	# Calculate Loss (for both TRAIN and EVAL modes)
-	onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=10)
+	onehot_labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=40)
 	loss = tf.losses.softmax_cross_entropy(
 			onehot_labels=onehot_labels, logits=logits)
 
@@ -104,20 +105,6 @@ def cnn_model_fn(features, labels, mode):
 					labels=labels, predictions=predictions["classes"])}
 	return tf.estimator.EstimatorSpec(
 			mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
-
-
-def resize_image(image, resolution):
-	(n, m) = image.shape
-	factor = n / resolution
-	rest = n % resolution
-
-	resized = np.empty((resolution, resolution))
-
-	for i in range(resolution):
-		for j in range(resolution):
-			resized[i][j] = image[int(rest + i*factor)][int(rest + j*factor)]
-
-	return resized
 
 
 def main(unused_argv):
@@ -141,8 +128,11 @@ def main(unused_argv):
 	eval_labels = np.loadtxt(eval_y, dtype=int, delimiter=",")
 
 	# Resize data
-	# train_data = resize_image(train_data, 28)
-	# eval_data = resize_image(eval_data, 28)
+	train_data = resize_images(train_data, 28).astype(np.float32)
+	eval_data = resize_images(eval_data, 28).astype(np.float32)
+
+	print(train_data.shape)
+	print(eval_data.shape)
 
 	# Create the Estimator
 	mnist_classifier = tf.estimator.Estimator(
