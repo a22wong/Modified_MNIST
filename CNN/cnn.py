@@ -6,7 +6,6 @@ from __future__ import division
 from __future__ import print_function
 
 # Imports
-import numpy as np
 import tensorflow as tf
 from resize_data import *
 
@@ -107,19 +106,25 @@ def cnn_model_fn(features, labels, mode):
 			mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 
-def main(unused_argv):
-	# Load training and eval data
-	# mnist = tf.contrib.learn.datasets.load_dataset("mnist")
-	# train_data = mnist.train.images	# Returns np.array
-	# train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
-	# eval_data = mnist.test.images	# Returns np.array
-	# eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
+def reMapY(y):
+	# re-map y to 0-40 classes instead of kaggle classes
+	kaggle_classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 24, 25, 27, 28, 30, 32, 35, 36, 40, 42, 45, 48, 49, 54, 56, 63, 64, 72, 81]
 
+	output = np.array(y)
+	for i, j in enumerate(y):
+		output[i] = kaggle_classes.index(j)
+	return output
+
+
+def main(unused_argv):
 	# load train data
 	train_x = "../Data/train_x_1000.csv"
 	train_y = "../Data/train_y_1000.csv"
 	train_data = np.loadtxt(train_x, delimiter=",").astype(np.float32)
 	train_labels = np.loadtxt(train_y, dtype=int, delimiter=",")
+
+	# re-format labels
+	train_labels = reMapY(train_labels)
 
 	# load eval data
 	eval_x = "../Data/eval_x_100.csv"
@@ -127,12 +132,12 @@ def main(unused_argv):
 	eval_data = np.loadtxt(eval_x, delimiter=",").astype(np.float32)
 	eval_labels = np.loadtxt(eval_y, dtype=int, delimiter=",")
 
+	# re-format labels
+	eval_labels = reMapY(eval_labels)
+
 	# Resize data
 	train_data = resize_images(train_data, 28).astype(np.float32)
 	eval_data = resize_images(eval_data, 28).astype(np.float32)
-
-	print(train_data.shape)
-	print(eval_data.shape)
 
 	# Create the Estimator
 	mnist_classifier = tf.estimator.Estimator(
