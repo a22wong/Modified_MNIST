@@ -117,6 +117,7 @@ def reMapY(y):
 
 
 def main(unused_argv):
+
 	# load train data
 	train_x = "../Data/train_x_1000.csv"
 	train_y = "../Data/train_y_1000.csv"
@@ -156,10 +157,7 @@ def main(unused_argv):
 			batch_size=100,
 			num_epochs=None,
 			shuffle=True)
-	mnist_classifier.train(
-			input_fn=train_input_fn,
-			steps=20000,
-			hooks=[logging_hook])
+	mnist_classifier.train(input_fn=train_input_fn, steps=20000, hooks=[logging_hook])
 
 	# Evaluate the model and print results
 	eval_input_fn = tf.estimator.inputs.numpy_input_fn(
