@@ -17,13 +17,13 @@ def cnn_model_fn(features, labels, mode):
 	# Input Layer
 	# Reshape X to 4-D tensor: [batch_size, width, height, channels]
 	# Modified MNIST images are 64x64 pixels, and have one color channel
-	input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
+	input_layer = tf.reshape(features["x"], [-1, 64, 64, 1])
 
 	# Convolutional Layer #1
 	# Computes 32 features using a 5x5 filter with ReLU activation.
 	# Padding is added to preserve width and height.
-	# Input Tensor Shape: [batch_size, 28, 28, 1]
-	# Output Tensor Shape: [batch_size, 28, 28, 32]
+	# Input Tensor Shape: [batch_size, 64, 64, 1]
+	# Output Tensor Shape: [batch_size, 64, 64, 32]
 	conv1 = tf.layers.conv2d(
 			inputs=input_layer,
 			filters=32,
@@ -33,15 +33,15 @@ def cnn_model_fn(features, labels, mode):
 
 	# Pooling Layer #1
 	# First max pooling layer with a 2x2 filter and stride of 2
-	# Input Tensor Shape: [batch_size, 28, 28, 32]
-	# Output Tensor Shape: [batch_size, 14, 14, 32]
+	# Input Tensor Shape: [batch_size, 64, 64, 32]
+	# Output Tensor Shape: [batch_size, 32, 32, 32]
 	pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
 
 	# Convolutional Layer #2
 	# Computes 64 features using a 5x5 filter.
 	# Padding is added to preserve width and height.
-	# Input Tensor Shape: [batch_size, 14, 14, 32]
-	# Output Tensor Shape: [batch_size, 14, 14, 64]
+	# Input Tensor Shape: [batch_size, 32, 32, 32]
+	# Output Tensor Shape: [batch_size, 32, 32, 64]
 	conv2 = tf.layers.conv2d(
 			inputs=pool1,
 			filters=64,
@@ -51,18 +51,18 @@ def cnn_model_fn(features, labels, mode):
 
 	# Pooling Layer #2
 	# Second max pooling layer with a 2x2 filter and stride of 2
-	# Input Tensor Shape: [batch_size, 14, 14, 64]
-	# Output Tensor Shape: [batch_size, 7, 7, 64]
+	# Input Tensor Shape: [batch_size, 32, 32, 64]
+	# Output Tensor Shape: [batch_size, 16, 16, 64]
 	pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
 
 	# Flatten tensor into a batch of vectors
 	# Input Tensor Shape: [batch_size, 16, 16, 64]
 	# Output Tensor Shape: [batch_size, 16 * 16 * 64]
-	pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+	pool2_flat = tf.reshape(pool2, [-1, 16 * 16 * 64])
 
 	# Dense Layer
 	# Densely connected layer with 1024 neurons
-	# Input Tensor Shape: [batch_size, 7 * 7 * 64]
+	# Input Tensor Shape: [batch_size, 16 * 16 * 64]
 	# Output Tensor Shape: [batch_size, 1024]
 	dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
 
@@ -124,25 +124,15 @@ def main(unused_argv):
 	train_data = np.loadtxt(train_x, delimiter=",").astype(np.float32)
 	train_labels = np.loadtxt(train_y, dtype=int, delimiter=",")
 
-	# re-format labels
-	train_labels = reMapY(train_labels)
-
 	# load eval data
 	eval_x = "../Data/eval_x_100.csv"
 	eval_y = "../Data/eval_y_100.csv"
 	eval_data = np.loadtxt(eval_x, delimiter=",").astype(np.float32)
 	eval_labels = np.loadtxt(eval_y, dtype=int, delimiter=",")
 
-	# re-format labels
-	eval_labels = reMapY(eval_labels)
-
-	# Resize data
-	train_data = resize_images(train_data, 28).astype(np.float32)
-	eval_data = resize_images(eval_data, 28).astype(np.float32)
-
 	# Create the Estimator
 	mnist_classifier = tf.estimator.Estimator(
-			model_fn=cnn_model_fn, model_dir="/tmp/mnist_convnet_model")
+			model_fn=cnn_model_fn, model_dir="/tmp/mnist_cnn64_model")
 
 	# Set up logging for predictions
 	# Log the values in the "Softmax" tensor with label "probabilities"
@@ -157,7 +147,7 @@ def main(unused_argv):
 			batch_size=100,
 			num_epochs=None,
 			shuffle=True)
-	mnist_classifier.train(input_fn=train_input_fn, steps=20000, hooks=[logging_hook])
+	mnist_classifier.train(input_fn=train_input_fn, steps=5000, hooks=[logging_hook])
 
 	# Evaluate the model and print results
 	eval_input_fn = tf.estimator.inputs.numpy_input_fn(
