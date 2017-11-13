@@ -1,16 +1,22 @@
+# Alexander Wong
+# 260602944
+# COMP 551 Project 3
+# Group:
+
 from random import seed
-from random import random
+import random
 from math import exp
 import numpy as np
 import copy
+from sklearn.preprocessing import normalize
 
 
 # Initialize a network
 def initialize_network(n_inputs, n_hidden, n_outputs):
     network = list()
-    hidden_layer = [{'weights': [random() for i in range(n_inputs + 1)]} for i in range(n_hidden)]
+    hidden_layer = [{'weights': [random.uniform(0,1) for i in range(n_inputs + 1)]} for i in range(n_hidden)]
     network.append(hidden_layer)
-    output_layer = [{'weights': [random() for i in range(n_hidden + 1)]} for i in range(n_outputs)]
+    output_layer = [{'weights': [random.uniform(0,1) for i in range(n_hidden + 1)]} for i in range(n_outputs)]
     network.append(output_layer)
     return network
 
@@ -98,6 +104,19 @@ def predict(network, row):
     return outputs.index(max(outputs))
 
 
+# Find the min and max values for each column
+def dataset_minmax(dataset):
+    minmax = list()
+    stats = [[min(column), max(column)] for column in zip(*dataset)]
+    return stats
+
+
+# Rescale dataset columns to the range 0-1
+def normalize_dataset(dataset, minmax):
+    for row in dataset:
+        for i in range(len(row) - 1):
+            row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
+
 # Calculate accuracy percentage
 def accuracy_metric(actual, predicted):
     correct = 0
@@ -120,34 +139,57 @@ def reMapY(y):
 
 def main():
     # load data
-    train_x = "../Data/train_x_1000.csv"
-    train_y = "../Data/train_y_1000.csv"
-    x = np.loadtxt(train_x, delimiter=",")
-    y = np.loadtxt(train_y, delimiter=",")
+    print "Loading data..."
+    train_x = "../Data/train_x_head1k.csv"
+    train_y = "../Data/train_y_head1k.csv"
+    test_x = "../Data/train_x_tail1k.csv"
+    test_y = "../Data/train_y_tail1k.csv"
+    x_train = np.loadtxt(train_x, delimiter=",")
+    y_train = np.loadtxt(train_y, delimiter=",")
+    x_test = np.loadtxt(test_x, delimiter=",")
+    y_test = np.loadtxt(test_y, delimiter=",")
 
     # re format y to fit FFNN algorithm
-    y = reMapY(y)
-    expected = copy.deepcopy(y)
-    y = np.matrix(y)
+    print "Preprocessing..."
+    y_train = reMapY(y_train)
+    y_train = np.matrix(y_train)
+    y_test = reMapY(y_test)
+    expected = copy.deepcopy(y_test)
+    y_test = np.matrix(y_test)
 
-    # add y as last colum of dataset
-    dataset = np.concatenate((x, y.T), 1)
+
+    print "Normalizing..."
+    x_train = normalize(x_train)
+    x_test = normalize(x_test)
+
+    # add y as last column of dataset
+    dataset = np.concatenate((x_train, y_train.T), 1)
     dataset = dataset.tolist()
 
+    print "Initializing network..."
     # initialize network
     n_inputs = len(dataset[0]) - 1
     n_outputs = 40  # len(set([row[-1] for row in dataset]))
-    network = initialize_network(n_inputs, 3, n_outputs)
+    network = initialize_network(n_inputs, 10, n_outputs)
 
+    print "Training..."
     # train
-    train_network(network, dataset, 0.5, 5, n_outputs)
+    # try momentum learning rate
+    # try relu activation: max{0,z}
+    train_network(network, dataset, 1, 10, n_outputs)
+    # for layer in network:
+    #     print(layer)
 
     # predict
+    print "Predicting..."
     predictions = []
     for row in dataset:
         prediction = predict(network, row)
         predictions.append(prediction)
-        # print('Expected=%d, Got=%d' % (row[-1], prediction))
+        print('Expected=%d, Predicted=%d' % (row[-1], prediction))
+
+    print "Printing predictions..."
+    np.savetxt("FFNN.csv", predictions, fmt='%d', delimiter=",")
 
     # measure accuracy
     print "Accuracy: "+str(accuracy_metric(expected, predictions))+"%"
