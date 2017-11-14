@@ -1,7 +1,8 @@
 # Alexander Wong
 # 260602944
 # COMP 551 Project 3
-# Group:
+# Group: Not Very Accurate
+https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/
 
 from random import seed
 import random
